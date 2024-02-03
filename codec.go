@@ -1,16 +1,19 @@
 package grpc_msgpack
 
 import (
-	"google.golang.org/grpc/encoding"
+	"bytes"
 
+	"google.golang.org/grpc/encoding"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
 func init() {
-	encoding.RegisterCodec(MsgPack{})
+	codec := MsgPack{OmitEmpty: true}
+	encoding.RegisterCodec(codec)
 }
 
 type MsgPack struct {
+	OmitEmpty bool
 }
 
 func (_ MsgPack) Name() string {
@@ -18,7 +21,16 @@ func (_ MsgPack) Name() string {
 }
 
 func (j MsgPack) Marshal(v interface{}) (out []byte, err error) {
-	return msgpack.Marshal(v)
+	var (
+		b       = bytes.NewBuffer(nil)
+		encoder = msgpack.NewEncoder(b)
+	)
+	encoder.SetOmitEmpty(j.OmitEmpty)
+	if err = encoder.Encode(v); err != nil {
+		return
+	}
+	out = b.Bytes()
+	return
 }
 
 func (j MsgPack) Unmarshal(data []byte, v interface{}) (err error) {
