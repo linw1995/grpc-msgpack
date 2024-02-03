@@ -3,17 +3,18 @@ package grpc_msgpack
 import (
 	"bytes"
 
-	"google.golang.org/grpc/encoding"
 	"github.com/vmihailenco/msgpack/v5"
+	"google.golang.org/grpc/encoding"
 )
 
 func init() {
-	codec := MsgPack{OmitEmpty: true}
+	codec := MsgPack{OmitEmpty: true, CustomStructTag: "json"}
 	encoding.RegisterCodec(codec)
 }
 
 type MsgPack struct {
-	OmitEmpty bool
+	OmitEmpty       bool
+	CustomStructTag string
 }
 
 func (_ MsgPack) Name() string {
@@ -26,6 +27,7 @@ func (j MsgPack) Marshal(v interface{}) (out []byte, err error) {
 		encoder = msgpack.NewEncoder(b)
 	)
 	encoder.SetOmitEmpty(j.OmitEmpty)
+	encoder.SetCustomStructTag(j.CustomStructTag)
 	if err = encoder.Encode(v); err != nil {
 		return
 	}
